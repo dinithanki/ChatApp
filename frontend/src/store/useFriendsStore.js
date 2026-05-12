@@ -29,16 +29,18 @@ export const useFriendsStore = create((set, get) => ({
   pendingRequests: [],
   sentRequests: [],
   contacts: [],
+  blockedUsers: [],
   isLoading: false,
 
   loadFriendData: async () => {
     set({ isLoading: true });
     console.log("[DEBUG] loadFriendData called");
     try {
-      const [pendingRes, sentRes, contactsRes] = await Promise.all([
+      const [pendingRes, sentRes, contactsRes, blockedRes] = await Promise.all([
         axiosInstance.get("/friends/pending"),
         axiosInstance.get("/friends/sent"),
         axiosInstance.get("/friends/contacts"),
+        axiosInstance.get("/friends/blocked"),
       ]);
 
       console.log("[DEBUG] API Responses:", {
@@ -52,10 +54,12 @@ export const useFriendsStore = create((set, get) => ({
         pendingRequests: pendingRes.data || [],
         sentRequests: sentRes.data || [],
         contacts: contactsRes.data || [],
+        blockedUsers: blockedRes.data || [],
       });
 
       console.log("[DEBUG] Friends store updated", {
         contacts: (contactsRes.data || []).length,
+        blocked: (blockedRes.data || []).length,
       });
     } catch (error) {
       console.error("[DEBUG] Error loading friend data:", error.message);
@@ -109,6 +113,7 @@ export const useFriendsStore = create((set, get) => ({
       toast.success("Friend request accepted");
       return request;
     } catch (error) {
+      await get().loadFriendData();
       toast.error(error.response?.data?.message || "Failed to accept request");
       throw error;
     }
@@ -128,6 +133,74 @@ export const useFriendsStore = create((set, get) => ({
       toast.success("Friend request rejected");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to reject request");
+      throw error;
+    }
+  },
+
+  deleteContact: async (contactId) => {
+    try {
+      await axiosInstance.delete(`/friends/delete/${contactId}`);
+      set((state) => ({
+        contacts: state.contacts.filter((c) => toId(c._id) !== toId(contactId)),
+        pendingRequests: state.pendingRequests.filter(
+          (request) =>
+            toId(request.senderId?._id || request.senderId) !==
+              toId(contactId) &&
+            toId(request.receiverId?._id || request.receiverId) !==
+              toId(contactId),
+        ),
+        sentRequests: state.sentRequests.filter(
+          (request) =>
+            toId(request.senderId?._id || request.senderId) !==
+              toId(contactId) &&
+            toId(request.receiverId?._id || request.receiverId) !==
+              toId(contactId),
+        ),
+      }));
+      await get().loadFriendData();
+      toast.success("Contact deleted");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete contact");
+      throw error;
+    }
+  },
+
+  blockContact: async (contactId) => {
+    try {
+      await axiosInstance.post(`/friends/block/${contactId}`);
+      set((state) => ({
+        contacts: state.contacts.filter((c) => toId(c._id) !== toId(contactId)),
+        pendingRequests: state.pendingRequests.filter(
+          (request) =>
+            toId(request.senderId?._id || request.senderId) !==
+              toId(contactId) &&
+            toId(request.receiverId?._id || request.receiverId) !==
+              toId(contactId),
+        ),
+        sentRequests: state.sentRequests.filter(
+          (request) =>
+            toId(request.senderId?._id || request.senderId) !==
+              toId(contactId) &&
+            toId(request.receiverId?._id || request.receiverId) !==
+              toId(contactId),
+        ),
+      }));
+      await get().loadFriendData();
+      toast.success("Contact blocked");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to block contact");
+      throw error;
+    }
+  },
+
+  unblockContact: async (contactId) => {
+    try {
+      await axiosInstance.post(`/friends/unblock/${contactId}`);
+      // Refresh friend data so unblocked user appears in contacts
+      await get().loadFriendData();
+      toast.success("Contact unblocked");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to unblock contact");
       throw error;
     }
   },

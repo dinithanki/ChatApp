@@ -13,7 +13,19 @@ const areFriends = (user, otherUserId) => {
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
-    const users = await User.find({ _id: { $ne: loggedInUserId } }).select(
+
+    // Find all users who have blocked the current user
+    const blockedByOthers = await User.find({
+      blockedUsers: loggedInUserId,
+    }).select("_id");
+    const blockedByOthersIds = blockedByOthers.map((u) => u._id);
+
+    // Combine all IDs to exclude (self + users who blocked current user)
+    const excludeIds = [loggedInUserId, ...blockedByOthersIds];
+
+    // Note: Users blocked BY the current user will still appear in results
+    // so they can view the Unblock button in All Users page
+    const users = await User.find({ _id: { $nin: excludeIds } }).select(
       "-password",
     );
     res.status(200).json(users);

@@ -52,8 +52,8 @@ export const sendFriendRequest = async (req, res) => {
     }
 
     const [sender, receiver] = await Promise.all([
-      User.findById(senderId).select("friends"),
-      User.findById(receiverId).select("friends"),
+      User.findById(senderId).select("friends blockedUsers"),
+      User.findById(receiverId).select("friends blockedUsers"),
     ]);
 
     if (!receiver) {
@@ -65,6 +65,14 @@ export const sendFriendRequest = async (req, res) => {
     );
     if (alreadyFriends) {
       return res.status(400).json({ message: "You are already friends" });
+    }
+
+    // Check if the receiver has blocked the sender
+    const isBlockedByReceiver = receiver.blockedUsers?.some(
+      (blockedId) => blockedId.toString() === senderId.toString(),
+    );
+    if (isBlockedByReceiver) {
+      return res.status(403).json({ message: "You are blocked by this user" });
     }
 
     const existingRequest = await FriendRequest.findOne({
@@ -156,19 +164,51 @@ export const acceptFriendRequest = async (req, res) => {
       return res.status(404).json({ message: "Request not found" });
     }
 
-    if (request.receiverId.toString() !== userId.toString()) {
+    const senderId = request.senderId?._id || request.senderId;
+    const receiverId = request.receiverId?._id || request.receiverId;
+
+    if (!senderId || !receiverId) {
+      await FriendRequest.findByIdAndDelete(requestId);
+      return res.status(404).json({
+        message: "Request is no longer valid. Request removed.",
+      });
+    }
+
+    if (receiverId.toString() !== userId.toString()) {
       return res.status(403).json({ message: "Not authorized" });
     }
 
+    const [senderUser, receiverUser] = await Promise.all([
+      User.findById(senderId),
+      User.findById(receiverId),
+    ]);
+
+    if (!senderUser || !receiverUser) {
+      await FriendRequest.findByIdAndDelete(requestId);
+      return res.status(404).json({
+        message: "One of the users no longer exists. Request removed.",
+      });
+    }
+
     request.status = "accepted";
+
+    // Delete any other requests between these users to avoid unique constraint issues
+    await FriendRequest.deleteMany({
+      $or: [
+        { senderId: senderUser._id, receiverId: receiverUser._id },
+        { senderId: receiverUser._id, receiverId: senderUser._id },
+      ],
+      _id: { $ne: request._id },
+    });
+
     await request.save();
 
     const result = await Promise.all([
-      User.findByIdAndUpdate(request.senderId, {
-        $addToSet: { friends: request.receiverId },
+      User.findByIdAndUpdate(senderUser._id, {
+        $addToSet: { friends: receiverUser._id },
       }),
-      User.findByIdAndUpdate(request.receiverId, {
-        $addToSet: { friends: request.senderId },
+      User.findByIdAndUpdate(receiverUser._id, {
+        $addToSet: { friends: senderUser._id },
       }),
     ]);
 
@@ -187,20 +227,18 @@ export const acceptFriendRequest = async (req, res) => {
 
     const io = global.io;
     if (io) {
-      io.to(request.senderId.toString()).emit(
-        "friendRequestAccepted",
-        populatedRequest,
-      );
-      io.to(request.receiverId.toString()).emit(
-        "friendRequestAccepted",
-        populatedRequest,
-      );
+      const senderIdStr = senderUser._id.toString();
+      const receiverIdStr = receiverUser._id.toString();
+      io.to(senderIdStr).emit("friendRequestAccepted", populatedRequest);
+      io.to(receiverIdStr).emit("friendRequestAccepted", populatedRequest);
     }
 
     console.log("[DEBUG] acceptFriendRequest success - friendship created");
     res.status(200).json(populatedRequest);
   } catch (error) {
     console.error("Error in acceptFriendRequest:", error);
+    console.error("Error stack:", error.stack);
+    console.error("Error message:", error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -260,6 +298,134 @@ export const getContacts = async (req, res) => {
     res.status(200).json(user?.friends || []);
   } catch (error) {
     console.error("Error in getContacts:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getBlocked = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId).populate(
+      "blockedUsers",
+      populateUserFields,
+    );
+
+    console.log("[DEBUG] getBlocked - userId:", userId);
+    console.log(
+      "[DEBUG] getBlocked - blocked count:",
+      user?.blockedUsers?.length || 0,
+    );
+    console.log("[DEBUG] getBlocked - blocked data:", user?.blockedUsers || []);
+
+    res.status(200).json(user?.blockedUsers || []);
+  } catch (error) {
+    console.error("Error in getBlocked:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const deleteContact = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { contactId } = req.params;
+
+    console.log(
+      "[DEBUG] deleteContact - userId:",
+      userId,
+      "contactId:",
+      contactId,
+    );
+
+    await Promise.all([
+      User.findByIdAndUpdate(userId, { $pull: { friends: contactId } }),
+      User.findByIdAndUpdate(contactId, { $pull: { friends: userId } }),
+      FriendRequest.deleteMany({
+        $or: [
+          { senderId: userId, receiverId: contactId },
+          { senderId: contactId, receiverId: userId },
+        ],
+      }),
+    ]);
+
+    res.status(200).json({ message: "Contact deleted" });
+  } catch (error) {
+    console.error("Error in deleteContact:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const blockContact = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { contactId } = req.params;
+
+    console.log(
+      "[DEBUG] blockContact - userId:",
+      userId,
+      "contactId:",
+      contactId,
+    );
+
+    await Promise.all([
+      User.findByIdAndUpdate(userId, {
+        $addToSet: { blockedUsers: contactId },
+        $pull: { friends: contactId },
+      }),
+      User.findByIdAndUpdate(contactId, { $pull: { friends: userId } }),
+      FriendRequest.deleteMany({
+        $or: [
+          { senderId: userId, receiverId: contactId },
+          { senderId: contactId, receiverId: userId },
+        ],
+      }),
+    ]);
+
+    res.status(200).json({ message: "Contact blocked" });
+  } catch (error) {
+    console.error("Error in blockContact:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const unblockContact = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { contactId } = req.params;
+
+    console.log(
+      "[DEBUG] unblockContact - userId:",
+      userId,
+      "contactId:",
+      contactId,
+    );
+
+    // Remove from blockedUsers and restore friendship
+    const result = await Promise.all([
+      User.findByIdAndUpdate(userId, {
+        $pull: { blockedUsers: contactId },
+        $addToSet: { friends: contactId },
+      }),
+      User.findByIdAndUpdate(contactId, {
+        $addToSet: { friends: userId },
+      }),
+    ]);
+
+    console.log(
+      "[DEBUG] unblockContact - updated results:",
+      result.map((r) => (r ? r._id : null)),
+    );
+
+    const io = global.io;
+    if (io) {
+      io.to(contactId.toString()).emit("unblocked", { by: userId });
+      io.to(userId.toString()).emit("unblocked", { of: contactId });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Contact unblocked and friendship restored" });
+  } catch (error) {
+    console.error("Error in unblockContact:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

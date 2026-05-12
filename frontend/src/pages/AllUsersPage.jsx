@@ -1,18 +1,25 @@
 import { useEffect } from "react";
-import { Loader, Send } from "lucide-react";
+import { Loader, Send, Unlock } from "lucide-react";
 import { useChatStore } from "../store/useChatStore.js";
 import { useFriendsStore } from "../store/useFriendsStore.js";
 import { useAuthStore } from "../store/useAuthStore.js";
 
 const getStatusForUser = (
   userId,
-  { contacts, sentRequests, pendingRequests },
+  { contacts, sentRequests, pendingRequests, blockedUsers },
 ) => {
+  const isBlocked = blockedUsers.some(
+    (user) => String(user._id) === String(userId),
+  );
+  if (isBlocked) {
+    return { label: "Unblock", type: "unblock", disabled: false };
+  }
+
   const isFriend = contacts.some(
     (contact) => String(contact._id) === String(userId),
   );
   if (isFriend) {
-    return { label: "Friends", disabled: true };
+    return { label: "Friends", type: "friends", disabled: true };
   }
 
   const sent = sentRequests.find(
@@ -20,7 +27,7 @@ const getStatusForUser = (
       String(request.receiverId?._id || request.receiverId) === String(userId),
   );
   if (sent) {
-    return { label: "Waiting for accept", disabled: true };
+    return { label: "Waiting for accept", type: "waiting", disabled: true };
   }
 
   const received = pendingRequests.find(
@@ -28,10 +35,10 @@ const getStatusForUser = (
       String(request.senderId?._id || request.senderId) === String(userId),
   );
   if (received) {
-    return { label: "Request received", disabled: true };
+    return { label: "Request received", type: "received", disabled: true };
   }
 
-  return { label: "Send Request", disabled: false };
+  return { label: "Send Request", type: "send", disabled: false };
 };
 
 const AllUsersPage = () => {
@@ -39,10 +46,12 @@ const AllUsersPage = () => {
   const { authUser } = useAuthStore();
   const {
     contacts,
+    blockedUsers,
     sentRequests,
     pendingRequests,
     loadFriendData,
     sendFriendRequest,
+    unblockContact,
   } = useFriendsStore();
 
   useEffect(() => {
@@ -78,6 +87,7 @@ const AllUsersPage = () => {
               contacts,
               sentRequests,
               pendingRequests,
+              blockedUsers,
             });
 
             return (
@@ -103,9 +113,19 @@ const AllUsersPage = () => {
                   <button
                     className="btn btn-primary btn-sm mt-4 gap-2 w-full"
                     disabled={status.disabled}
-                    onClick={() => sendFriendRequest(user._id)}
+                    onClick={() => {
+                      if (status.type === "unblock") {
+                        unblockContact(user._id);
+                      } else {
+                        sendFriendRequest(user._id);
+                      }
+                    }}
                   >
-                    <Send className="size-4" />
+                    {status.type === "unblock" ? (
+                      <Unlock className="size-4" />
+                    ) : (
+                      <Send className="size-4" />
+                    )}
                     {status.label}
                   </button>
                 </div>

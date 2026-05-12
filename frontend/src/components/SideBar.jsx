@@ -39,6 +39,7 @@ const Sidebar = () => {
 
   const {
     contacts = [],
+    blockedUsers = [],
     loadFriendData,
     isLoading: isContactsLoading,
   } = useFriendsStore();
@@ -72,9 +73,11 @@ const Sidebar = () => {
   const conversationMap = new Map(
     conversations.map((convo) => [toId(convo?.otherUser?._id), convo]),
   );
+  const blockedUserIds = new Set(blockedUsers.map((u) => toId(u._id)));
 
   const displayList = contacts
     .filter((user) => toId(user._id) !== toId(authUser?._id))
+    .filter((user) => !blockedUserIds.has(toId(user._id)))
     .map((user) => {
       const conversation = conversationMap.get(toId(user._id));
       return (

@@ -8,6 +8,10 @@ import {
   acceptFriendRequest,
   rejectFriendRequest,
   getContacts,
+  getBlocked,
+  deleteContact,
+  blockContact,
+  unblockContact,
 } from "../controllers/friend.controller.js";
 
 const router = express.Router();
@@ -19,5 +23,9 @@ router.get("/sent", protectRoute, getSentRequests);
 router.post("/accept/:requestId", protectRoute, acceptFriendRequest);
 router.delete("/reject/:requestId", protectRoute, rejectFriendRequest);
 router.get("/contacts", protectRoute, getContacts);
+router.get("/blocked", protectRoute, getBlocked);
+router.delete("/delete/:contactId", protectRoute, deleteContact);
+router.post("/block/:contactId", protectRoute, blockContact);
+router.post("/unblock/:contactId", protectRoute, unblockContact);
 
 export default router;

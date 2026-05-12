@@ -56,13 +56,17 @@ const RequestsNotification = () => {
                   <div className="flex items-center gap-2">
                     <button
                       className="btn btn-xs btn-success btn-circle"
-                      onClick={() => acceptFriendRequest(request._id)}
+                      onClick={() =>
+                        void acceptFriendRequest(request._id).catch(() => {})
+                      }
                     >
                       <Check className="size-4" />
                     </button>
                     <button
                       className="btn btn-xs btn-error btn-circle"
-                      onClick={() => rejectFriendRequest(request._id)}
+                      onClick={() =>
+                        void rejectFriendRequest(request._id).catch(() => {})
+                      }
                     >
                       <X className="size-4" />
                     </button>
