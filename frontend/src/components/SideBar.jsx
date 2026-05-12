@@ -4,6 +4,8 @@ import { useAuthStore } from "../store/useAuthStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import { Users, MessageCircle } from "lucide-react";
 
+const toId = (value) => String(value);
+
 const formatTime = (date) => {
   const now = new Date();
   const msgDate = new Date(date);
@@ -28,24 +30,74 @@ const Sidebar = () => {
     selectedUser,
     setSelectedUser,
     getUsers,
+    getConversations,
+    subscribeToMessages,
+    unsubscribeFromMessages,
     users = [],
+    conversations = [],
     isUsersLoading,
+    isConversationsLoading,
   } = useChatStore();
 
-  const { authUser, onlineUsers } = useAuthStore();
+  const { authUser, onlineUsers, socket } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+  const [, forceRender] = useState(0);
+  const onlineUserIds = new Set(onlineUsers.map((id) => toId(id)));
 
   useEffect(() => {
+    console.log("[SIDEBAR] MOUNT - calling getUsers and getConversations");
     getUsers();
-  }, [getUsers]);
+    const convPromise = getConversations();
+    console.log("[SIDEBAR] getConversations called, promise:", !!convPromise);
+  }, [getUsers, getConversations]);
 
-  const displayList = users.filter((user) => user._id !== authUser?._id);
-  const isLoading = isUsersLoading;
+  useEffect(() => {
+    console.log(
+      "[SIDEBAR] Conversations updated:",
+      conversations.map((c) => c.otherUser?.fullName),
+    );
+    forceRender((prev) => prev + 1);
+  }, [conversations]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    subscribeToMessages();
+    return () => unsubscribeFromMessages();
+  }, [socket, subscribeToMessages, unsubscribeFromMessages]);
+
+  const displayUsers = users.filter(
+    (user) => toId(user._id) !== toId(authUser?._id),
+  );
+  const conversationUserIds = new Set(
+    conversations.map((conversation) => toId(conversation?.otherUser?._id)),
+  );
+
+  const conversationRows = conversations
+    .filter((conversation) => conversation?.otherUser?._id)
+    .map((conversation) => ({
+      otherUser: conversation.otherUser,
+      lastMessage: conversation.lastMessage,
+      updatedAt: conversation.updatedAt,
+      isConversation: true,
+    }));
+
+  const nonConversationRows = displayUsers
+    .filter((user) => !conversationUserIds.has(toId(user._id)))
+    .map((user) => ({
+      otherUser: user,
+      lastMessage: null,
+      updatedAt: null,
+      isConversation: false,
+    }));
+
+  const displayList = [...conversationRows, ...nonConversationRows];
+  const isLoading = isUsersLoading || isConversationsLoading;
 
   const filteredList = showOnlineOnly
     ? displayList.filter((item) => {
-        const userId = item.otherUser?._id || item._id;
-        return onlineUsers.includes(userId);
+        const userId = item.otherUser?._id;
+        return onlineUserIds.has(toId(userId));
       })
     : displayList;
 
@@ -83,8 +135,21 @@ const Sidebar = () => {
           </div>
         ) : (
           filteredList.map((item) => {
-            const user = item;
+            const user = item.otherUser;
             const userId = user?._id;
+            const isOnline = onlineUserIds.has(toId(userId));
+
+            const hasText = !!item.lastMessage?.text;
+            const hasImage = !!item.lastMessage?.image;
+            const lastMessagePreview = hasText
+              ? item.lastMessage.text
+              : hasImage
+                ? "Photo"
+                : "Start chatting";
+
+            const lastMessageTime = item.lastMessage?.createdAt
+              ? formatTime(item.lastMessage.createdAt)
+              : "";
 
             return (
               <button
@@ -94,7 +159,7 @@ const Sidebar = () => {
                   w-full p-3 flex items-center gap-3
                   hover:bg-base-300 transition-colors
                   border-b border-base-200/50
-                  ${selectedUser?._id === userId ? "bg-base-300 ring-1 ring-base-300" : ""}
+                  ${toId(selectedUser?._id) === toId(userId) ? "bg-base-300 ring-1 ring-base-300" : ""}
                 `}
               >
                 {/* Avatar */}
@@ -104,7 +169,7 @@ const Sidebar = () => {
                     alt={user?.fullName}
                     className="size-12 object-cover rounded-full"
                   />
-                  {onlineUsers.includes(userId) && (
+                  {isOnline && (
                     <span
                       className="absolute bottom-0 right-0 size-3 bg-green-500 
                       rounded-full ring-2 ring-zinc-900"
@@ -116,9 +181,18 @@ const Sidebar = () => {
                 <div className="hidden lg:flex flex-1 flex-col min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <div className="font-medium truncate">{user?.fullName}</div>
+                    {lastMessageTime && (
+                      <div className="text-xs text-zinc-500 flex-shrink-0">
+                        {lastMessageTime}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-sm text-zinc-500">
-                    {onlineUsers.includes(userId) ? "Online" : "Offline"}
+                  <div className="text-sm text-zinc-500 truncate">
+                    {item.isConversation
+                      ? lastMessagePreview
+                      : isOnline
+                        ? "Online"
+                        : "Offline"}
                   </div>
                 </div>
               </button>
