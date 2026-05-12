@@ -5,12 +5,15 @@ import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
 import SettingPage from "./pages/SettingPage";
 import ProfilePage from "./pages/ProfilePage";
+import AllUsersPage from "./pages/AllUsersPage";
+import ContactsPage from "./pages/ContactsPage";
 import { useAuthStore } from "./store/useAuthStore.js";
 import { useEffect } from "react";
 import { Loader } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { useThemeStore } from "./store/useThemeStore.js";
+import FriendBootstrap from "./components/FriendBootstrap";
 
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
@@ -35,6 +38,7 @@ const App = () => {
   return (
     <div data-theme={theme}>
       <Navbar />
+      <FriendBootstrap />
 
       <Routes>
         <Route
@@ -53,6 +57,14 @@ const App = () => {
         <Route
           path="/profile"
           element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/users"
+          element={authUser ? <AllUsersPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/contacts"
+          element={authUser ? <ContactsPage /> : <Navigate to="/login" />}
         />
       </Routes>
       <Toaster />
