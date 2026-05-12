@@ -1,6 +1,6 @@
-# ChatApp
+# Chat Mania
 
-ChatApp is a full-stack real-time chat application built with a Vite + React frontend and an Express + MongoDB backend. It supports account creation, authentication, profile updates, contact management, friend requests, one-to-one messaging, online presence, and live updates with Socket.IO.
+Chat Mania is a full-stack real-time chat application built with a Vite + React frontend and an Express + MongoDB backend. It supports account creation, authentication, profile updates, contact management, friend requests, one-to-one messaging, online presence, and live updates with Socket.IO.
 
 ## Features
 
@@ -21,7 +21,7 @@ ChatApp is a full-stack real-time chat application built with a Vite + React fro
 ## Project Structure
 
 ```text
-ChatApp/
+Chat Mania/
 ├── backend/
 │   ├── src/
 │   │   ├── controllers/
@@ -60,7 +60,7 @@ The frontend reads the authenticated user from the backend, connects to Socket.I
 
 ```bash
 git clone <your-repo-url>
-cd ChatApp
+cd chat-mania
 ```
 
 ### 2. Install backend dependencies
@@ -79,7 +79,7 @@ npm install
 
 ## Environment Variables
 
-Create environment files for each app.
+Create `.env` files in each folder with the following variables.
 
 ### Backend: backend/.env
 
@@ -109,7 +109,7 @@ VITE_TOAST_DURATION=3000
 
 Note: the frontend proxies API and Socket.IO traffic to the backend URL configured in `VITE_API_URL` and `VITE_SOCKET_URL`. Keep those values aligned with the backend port you actually run.
 
-## Running the App
+## Running Chat Mania
 
 Open two terminals.
 
@@ -180,14 +180,14 @@ Vite usually starts on `http://localhost:5173`.
 - `/` - chat home page for authenticated users.
 - `/signup` - registration page.
 - `/login` - login page.
-- `/settings` - app settings.
+- `/settings` - Chat Mania settings.
 - `/profile` - user profile.
 - `/users` - all users view.
 - `/contacts` - contacts and friend management.
 
 ## Real-Time Events
 
-The app uses Socket.IO for:
+Chat Mania uses Socket.IO for:
 
 - online user presence tracking,
 - new message delivery,
@@ -203,4 +203,4 @@ The app uses Socket.IO for:
 
 ## Contributing
 
-If you extend the app, keep the README in sync with new routes, environment variables, and scripts so deployment and local setup stay reproducible.
+If you extend Chat Mania, keep the README in sync with new routes, environment variables, and scripts so deployment and local setup stay reproducible.
