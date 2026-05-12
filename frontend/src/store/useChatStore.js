@@ -36,22 +36,10 @@ export const useChatStore = create((set, get) => ({
 
   getConversations: async () => {
     set({ isConversationsLoading: true });
-    console.log("[GETCONV] Fetching recent conversations...");
     try {
       const res = await axiosInstance.get("/messages/conversations/recent");
-      console.log(
-        "[GETCONV] Received",
-        res.data?.length || 0,
-        "conversations:",
-        res.data?.map((c) => c.otherUser?.fullName),
-      );
       set({ conversations: sortConversationsByRecent(res.data) });
     } catch (error) {
-      console.error(
-        "[GETCONV] Error:",
-        error?.response?.status,
-        error?.message,
-      );
       toast.error(
         error.response?.data?.message || "Failed to fetch conversations",
       );
@@ -66,34 +54,18 @@ export const useChatStore = create((set, get) => ({
 
     const { authUser } = useAuthStore.getState();
     if (!authUser?._id) {
-      console.warn("[UPSERT] No authUser, skipping");
       return;
     }
-    console.log("[UPSERT] Called with message:", message);
 
     const myId = toId(authUser._id);
     const senderId = toId(message.senderId);
     const receiverId = toId(message.receiverId);
 
     const otherUserId = senderId === myId ? receiverId : senderId;
-    console.log(
-      "[UPSERT] otherUserId:",
-      otherUserId,
-      "myId:",
-      myId,
-      "senderId:",
-      senderId,
-    );
 
     set((state) => {
       const existingIndex = state.conversations.findIndex(
         (conversation) => toId(conversation?.otherUser?._id) === otherUserId,
-      );
-      console.log(
-        "[UPSERT] existingIndex:",
-        existingIndex,
-        "current convos count:",
-        state.conversations.length,
       );
 
       const fallbackUser = state.users.find(
@@ -144,10 +116,6 @@ export const useChatStore = create((set, get) => ({
           : state.conversations;
 
       const newConvos = [updatedConversation, ...conversationsWithoutCurrent];
-      console.log(
-        "[UPSERT] New convos order (first 2):",
-        newConvos.slice(0, 2).map((c) => c.otherUser?.fullName),
-      );
       return {
         conversations: newConvos,
       };
@@ -198,9 +166,7 @@ export const useChatStore = create((set, get) => ({
     socket.off("newMessage");
 
     socket.on("newMessage", (newMessage) => {
-      console.log("[SOCKET] newMessage received from:", newMessage.senderId);
-      const { selectedUser, conversations } = get();
-      console.log("[SOCKET] Current convos count:", conversations.length);
+      const { selectedUser } = get();
       upsertConversationFromMessage(newMessage);
 
       if (!selectedUser?._id) return;

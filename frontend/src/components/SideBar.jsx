@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
+import { useFriendsStore } from "../store/useFriendsStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import { Users, MessageCircle } from "lucide-react";
 
 const toId = (value) => String(value);
 
 const formatTime = (date) => {
+  if (!date) return "";
   const now = new Date();
   const msgDate = new Date(date);
   const diffMs = now - msgDate;
@@ -29,35 +31,27 @@ const Sidebar = () => {
   const {
     selectedUser,
     setSelectedUser,
-    getUsers,
-    getConversations,
     subscribeToMessages,
     unsubscribeFromMessages,
-    users = [],
     conversations = [],
-    isUsersLoading,
-    isConversationsLoading,
+    getConversations,
   } = useChatStore();
+
+  const {
+    contacts = [],
+    loadFriendData,
+    isLoading: isContactsLoading,
+  } = useFriendsStore();
 
   const { authUser, onlineUsers, socket } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
-  const [, forceRender] = useState(0);
   const onlineUserIds = new Set(onlineUsers.map((id) => toId(id)));
 
   useEffect(() => {
-    console.log("[SIDEBAR] MOUNT - calling getUsers and getConversations");
-    getUsers();
-    const convPromise = getConversations();
-    console.log("[SIDEBAR] getConversations called, promise:", !!convPromise);
-  }, [getUsers, getConversations]);
-
-  useEffect(() => {
-    console.log(
-      "[SIDEBAR] Conversations updated:",
-      conversations.map((c) => c.otherUser?.fullName),
-    );
-    forceRender((prev) => prev + 1);
-  }, [conversations]);
+    console.log("[DEBUG] SideBar mount: loading friend data and conversations");
+    loadFriendData();
+    getConversations();
+  }, [loadFriendData, getConversations]);
 
   useEffect(() => {
     if (!socket) return;
@@ -66,33 +60,44 @@ const Sidebar = () => {
     return () => unsubscribeFromMessages();
   }, [socket, subscribeToMessages, unsubscribeFromMessages]);
 
-  const displayUsers = users.filter(
-    (user) => toId(user._id) !== toId(authUser?._id),
+  // Debug: watch for contacts updates
+  useEffect(() => {
+    console.log("[DEBUG] Contacts updated in store:", {
+      count: contacts.length,
+      data: contacts.map((c) => ({ _id: c._id, fullName: c.fullName })),
+    });
+  }, [contacts]);
+
+  // Merge contacts with conversations and sort by most recent message
+  const conversationMap = new Map(
+    conversations.map((convo) => [toId(convo?.otherUser?._id), convo]),
   );
-  const conversationUserIds = new Set(
-    conversations.map((conversation) => toId(conversation?.otherUser?._id)),
-  );
 
-  const conversationRows = conversations
-    .filter((conversation) => conversation?.otherUser?._id)
-    .map((conversation) => ({
-      otherUser: conversation.otherUser,
-      lastMessage: conversation.lastMessage,
-      updatedAt: conversation.updatedAt,
-      isConversation: true,
-    }));
+  const displayList = contacts
+    .filter((user) => toId(user._id) !== toId(authUser?._id))
+    .map((user) => {
+      const conversation = conversationMap.get(toId(user._id));
+      return (
+        conversation || {
+          otherUser: user,
+          lastMessage: null,
+          updatedAt: new Date(0).toISOString(), // Old timestamp for contacts without messages
+        }
+      );
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a?.lastMessage?.createdAt || a?.updatedAt || 0);
+      const dateB = new Date(b?.lastMessage?.createdAt || b?.updatedAt || 0);
+      return dateB - dateA; // Most recent first
+    });
 
-  const nonConversationRows = displayUsers
-    .filter((user) => !conversationUserIds.has(toId(user._id)))
-    .map((user) => ({
-      otherUser: user,
-      lastMessage: null,
-      updatedAt: null,
-      isConversation: false,
-    }));
+  console.log("[DEBUG] SideBar displayList:", {
+    contactsCount: contacts.length,
+    conversationsCount: conversations.length,
+    displayListCount: displayList.length,
+  });
 
-  const displayList = [...conversationRows, ...nonConversationRows];
-  const isLoading = isUsersLoading || isConversationsLoading;
+  const isLoading = isContactsLoading;
 
   const filteredList = showOnlineOnly
     ? displayList.filter((item) => {
@@ -131,7 +136,7 @@ const Sidebar = () => {
         {filteredList.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-zinc-500 text-sm">
             <Users className="size-8 mb-2 opacity-50" />
-            <span className="hidden lg:inline">No users found</span>
+            <span className="hidden lg:inline">No contacts found</span>
           </div>
         ) : (
           filteredList.map((item) => {
@@ -139,14 +144,10 @@ const Sidebar = () => {
             const userId = user?._id;
             const isOnline = onlineUserIds.has(toId(userId));
 
-            const hasText = !!item.lastMessage?.text;
-            const hasImage = !!item.lastMessage?.image;
-            const lastMessagePreview = hasText
-              ? item.lastMessage.text
-              : hasImage
-                ? "Photo"
-                : "Start chatting";
-
+            const lastMessageText =
+              item.lastMessage?.text || item.lastMessage?.image
+                ? item.lastMessage?.text || "Photo"
+                : "No messages yet";
             const lastMessageTime = item.lastMessage?.createdAt
               ? formatTime(item.lastMessage.createdAt)
               : "";
@@ -188,11 +189,7 @@ const Sidebar = () => {
                     )}
                   </div>
                   <div className="text-sm text-zinc-500 truncate">
-                    {item.isConversation
-                      ? lastMessagePreview
-                      : isOnline
-                        ? "Online"
-                        : "Offline"}
+                    {lastMessageText}
                   </div>
                 </div>
               </button>

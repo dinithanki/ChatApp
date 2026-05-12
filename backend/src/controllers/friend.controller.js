@@ -148,6 +148,9 @@ export const acceptFriendRequest = async (req, res) => {
     const { requestId } = req.params;
     const userId = req.user._id;
 
+    console.log("[DEBUG] acceptFriendRequest - requestId:", requestId);
+    console.log("[DEBUG] acceptFriendRequest - userId:", userId);
+
     const request = await FriendRequest.findById(requestId);
     if (!request) {
       return res.status(404).json({ message: "Request not found" });
@@ -160,7 +163,7 @@ export const acceptFriendRequest = async (req, res) => {
     request.status = "accepted";
     await request.save();
 
-    await Promise.all([
+    const result = await Promise.all([
       User.findByIdAndUpdate(request.senderId, {
         $addToSet: { friends: request.receiverId },
       }),
@@ -168,6 +171,15 @@ export const acceptFriendRequest = async (req, res) => {
         $addToSet: { friends: request.senderId },
       }),
     ]);
+
+    console.log(
+      "[DEBUG] Friends added to users - sender result:",
+      result[0]?.friends?.length || 0,
+    );
+    console.log(
+      "[DEBUG] Friends added to users - receiver result:",
+      result[1]?.friends?.length || 0,
+    );
 
     const populatedRequest = await FriendRequest.findById(request._id)
       .populate("senderId", populateUserFields)
@@ -185,6 +197,7 @@ export const acceptFriendRequest = async (req, res) => {
       );
     }
 
+    console.log("[DEBUG] acceptFriendRequest success - friendship created");
     res.status(200).json(populatedRequest);
   } catch (error) {
     console.error("Error in acceptFriendRequest:", error);
@@ -236,6 +249,13 @@ export const getContacts = async (req, res) => {
       "friends",
       populateUserFields,
     );
+
+    console.log("[DEBUG] getContacts - userId:", userId);
+    console.log(
+      "[DEBUG] getContacts - friends count:",
+      user?.friends?.length || 0,
+    );
+    console.log("[DEBUG] getContacts - friends data:", user?.friends || []);
 
     res.status(200).json(user?.friends || []);
   } catch (error) {

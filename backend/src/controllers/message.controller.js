@@ -2,6 +2,14 @@ import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import cloudinary from "../lib/cloudinary.js";
 
+const areFriends = (user, otherUserId) => {
+  if (!user?.friends) return false;
+
+  return user.friends.some(
+    (friendId) => friendId.toString() === otherUserId.toString(),
+  );
+};
+
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
@@ -18,6 +26,7 @@ export const getUsersForSidebar = async (req, res) => {
 export const getConversations = async (req, res) => {
   try {
     const myId = req.user._id;
+    const user = await User.findById(myId).select("friends");
 
     const conversations = await Message.aggregate([
       {
@@ -72,7 +81,11 @@ export const getConversations = async (req, res) => {
       { $sort: { updatedAt: -1 } },
     ]);
 
-    res.status(200).json(conversations);
+    const filteredConversations = conversations.filter((conversation) =>
+      areFriends(user, conversation.otherUser._id),
+    );
+
+    res.status(200).json(filteredConversations);
   } catch (err) {
     console.error("Error in getConversations:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -83,6 +96,13 @@ export const getMessages = async (req, res) => {
   try {
     const { id: userToChatId } = req.params;
     const myId = req.user._id;
+
+    const currentUser = await User.findById(myId).select("friends");
+    if (!areFriends(currentUser, userToChatId)) {
+      return res
+        .status(403)
+        .json({ message: "You can only chat with contacts" });
+    }
 
     const messages = await Message.find({
       $or: [
@@ -103,10 +123,16 @@ export const sendMessage = async (req, res) => {
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
+    const sender = await User.findById(senderId).select("friends");
+
     if (receiverId === senderId.toString()) {
       return res
         .status(400)
         .json({ message: "You cannot send a message to yourself" });
+    }
+
+    if (!areFriends(sender, receiverId)) {
+      return res.status(403).json({ message: "You can only message contacts" });
     }
 
     let imageUrl;

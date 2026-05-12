@@ -33,6 +33,7 @@ export const useFriendsStore = create((set, get) => ({
 
   loadFriendData: async () => {
     set({ isLoading: true });
+    console.log("[DEBUG] loadFriendData called");
     try {
       const [pendingRes, sentRes, contactsRes] = await Promise.all([
         axiosInstance.get("/friends/pending"),
@@ -40,13 +41,30 @@ export const useFriendsStore = create((set, get) => ({
         axiosInstance.get("/friends/contacts"),
       ]);
 
+      console.log("[DEBUG] API Responses:", {
+        pending: pendingRes.data?.length || 0,
+        sent: sentRes.data?.length || 0,
+        contacts: contactsRes.data?.length || 0,
+      });
+      console.log("[DEBUG] Contacts data:", contactsRes.data);
+
       set({
         pendingRequests: pendingRes.data || [],
         sentRequests: sentRes.data || [],
         contacts: contactsRes.data || [],
       });
+
+      console.log("[DEBUG] Friends store updated", {
+        contacts: (contactsRes.data || []).length,
+      });
     } catch (error) {
-      console.error("Error loading friend data:", error);
+      console.error("[DEBUG] Error loading friend data:", error.message);
+      console.error(
+        "[DEBUG] Error response:",
+        error.response?.status,
+        error.response?.data,
+      );
+      console.error("[DEBUG] Error details:", error);
       toast.error(error.response?.data?.message || "Failed to load friends");
     } finally {
       set({ isLoading: false });
