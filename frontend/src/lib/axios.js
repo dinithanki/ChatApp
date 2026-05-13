@@ -4,7 +4,7 @@ const timeout = parseInt(import.meta.env.VITE_API_TIMEOUT || "30000");
 const debugMode = import.meta.env.VITE_DEBUG_MODE === "true";
 
 export const axiosInstance = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.MODE === "development" ? "/api" : import.meta.env.VITE_API_URL + "/api",
   withCredentials: true,
   timeout: timeout,
 });

@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
 // Socket.io base URL - use "/" in development to leverage Vite's proxy
-const BASE_URL = import.meta.env.MODE === "development" ? "/" : "/";
+const BASE_URL = import.meta.env.MODE === "development" ? "/" : import.meta.env.VITE_API_URL;
 
 // Socket.io configuration from environment variables
 const SOCKET_CONFIG = {
