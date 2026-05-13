@@ -51,13 +51,36 @@ export const useAuthStore = create((set, get) => ({
     set({ isSigningUp: true });
     try {
       const res = await axiosInstance.post("/auth/signup", data);
-      set({ authUser: res.data });
-      toast.success("Account created successfully");
-      get().connectSocket();
+      // Return response to caller so UI can navigate to OTP page
+      toast.success(res.data?.message || "Account created. Verify your email.");
+      return res.data;
     } catch (error) {
       toast.error(error.response?.data?.message || "Sign up failed");
     } finally {
       set({ isSigningUp: false });
+    }
+  },
+
+  verifyEmail: async (data) => {
+    try {
+      const res = await axiosInstance.post("/auth/verify-email", data);
+      set({ authUser: res.data });
+      toast.success("Email verified, logged in");
+      get().connectSocket();
+      return res.data;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Verification failed");
+      throw error;
+    }
+  },
+
+  resendOTP: async (data) => {
+    try {
+      const res = await axiosInstance.post("/auth/resend-otp", data);
+      toast.success(res.data?.message || "OTP resent");
+      return res.data;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Resend OTP failed");
     }
   },
 
