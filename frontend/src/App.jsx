@@ -3,6 +3,9 @@ import { Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage.jsx";
 import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import SettingPage from "./pages/SettingPage";
 import ProfilePage from "./pages/ProfilePage";
 import AllUsersPage from "./pages/AllUsersPage";
@@ -50,8 +53,20 @@ const App = () => {
           element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
         />
         <Route
+          path="/verify-email"
+          element={!authUser ? <VerifyEmailPage /> : <Navigate to="/" />}
+        />
+        <Route
           path="/login"
           element={!authUser ? <LoginPage /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/forgot-password"
+          element={!authUser ? <ForgotPasswordPage /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/reset-password/:token"
+          element={!authUser ? <ResetPasswordPage /> : <Navigate to="/" />}
         />
         <Route path="/settings" element={<SettingPage />} />
         <Route
