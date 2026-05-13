@@ -116,8 +116,8 @@ const Navbar = () => {
 
                     <RequestsNotification />
 
-                    <button 
-                      className="flex gap-2 items-center btn btn-sm btn-ghost hover:bg-error/10 hover:text-error transition-colors" 
+                    <button
+                      className="flex gap-2 items-center btn btn-sm btn-ghost hover:bg-error/10 hover:text-error transition-colors"
                       onClick={() => setShowLogoutConfirm(true)}
                     >
                       <LogOut className="size-5" />
@@ -135,8 +135,8 @@ const Navbar = () => {
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-base-300/60 backdrop-blur-sm" 
+          <div
+            className="absolute inset-0 bg-base-300/60 backdrop-blur-sm"
             onClick={() => setShowLogoutConfirm(false)}
           ></div>
 
@@ -154,14 +154,14 @@ const Navbar = () => {
               </p>
             </div>
             <div className="bg-base-200/50 px-6 py-4 flex items-center justify-end gap-3 border-t border-base-300">
-              <button 
-                className="btn btn-ghost hover:bg-base-300/50 font-medium" 
+              <button
+                className="btn btn-ghost hover:bg-base-300/50 font-medium"
                 onClick={() => setShowLogoutConfirm(false)}
               >
                 Cancel
               </button>
-              <button 
-                className="btn btn-error text-white font-medium" 
+              <button
+                className="btn btn-error text-white font-medium"
                 onClick={handleLogoutConfirm}
               >
                 Yes, Logout
