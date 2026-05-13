@@ -130,8 +130,8 @@ const ForgotPasswordPage = () => {
 
       {/* Right Side - Image/Pattern */}
       <AuthImagePattern
-        title="Forgot your password?"
-        subtitle="No worries! We'll help you reset it. Just enter your email address and we'll send you a link to create a new password."
+        title="Lost Your Key?"
+        subtitle="Don't worry, we've got you covered. Enter your email and we'll get you back to chatting in no time."
       />
     </div>
   );

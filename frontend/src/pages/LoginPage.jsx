@@ -127,10 +127,8 @@ const LoginPage = () => {
 
       {/* Right Side - Image/Pattern */}
       <AuthImagePattern
-        title={"Welcome back!"}
-        subtitle={
-          "Sign in to continue your conversations and catch up with your messages."
-        }
+        title="Welcome back to Chat Mania!"
+        subtitle="Log in to pick up where you left off and keep the conversation going."
       />
     </div>
   );

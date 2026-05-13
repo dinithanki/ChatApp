@@ -180,8 +180,8 @@ const SignUpPage = () => {
       {/* right side */}
 
       <AuthImagePattern
-        title="Join our community"
-        subtitle="Connect with friends, share moments, and stay in touch with your loved ones."
+        title="Start Your Chat Mania Journey"
+        subtitle="Create an account to discover new friends, join exciting groups, and chat endlessly."
       />
     </div>
   );

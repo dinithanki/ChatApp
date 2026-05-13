@@ -123,8 +123,8 @@ const ResetPasswordPage = () => {
         </div>
 
         <AuthImagePattern
-          title="Link Expired"
-          subtitle="Reset links expire after 10 minutes for security reasons. Request a new link to continue."
+          title="Oops! Link Expired"
+          subtitle="For your security, reset links don't last forever. Please request a new one to regain access."
         />
       </div>
     );
@@ -248,8 +248,8 @@ const ResetPasswordPage = () => {
 
       {/* Right Side - Image/Pattern */}
       <AuthImagePattern
-        title="Set a new password"
-        subtitle="Create a strong password to secure your account. Make sure it's at least 6 characters long."
+        title="Create a New Password"
+        subtitle="Lock it down! Choose a strong, secure password to keep your chats safe and private."
       />
     </div>
   );

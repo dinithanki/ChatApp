@@ -113,8 +113,8 @@ const VerifyEmailPage = () => {
       </div>
 
       <AuthImagePattern
-        title="Secure and private"
-        subtitle="We send a one-time code to your email to confirm your identity."
+        title="Verify Your Identity"
+        subtitle="Security first! We've sent a one-time code to your email to make sure it's really you."
       />
     </div>
   );
