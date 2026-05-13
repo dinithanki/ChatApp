@@ -7,6 +7,7 @@ import {
   CircleUser,
   Users,
   Search,
+  Menu,
 } from "lucide-react";
 import RequestsNotification from "./RequestsNotification";
 
@@ -32,41 +33,83 @@ const Navbar = () => {
           <div className="flex items-center gap-2">
             {authUser && (
               <>
-                <Link
-                  to="/users"
-                  className="btn btn-sm gap-2 transition-colors"
-                >
-                  <Search className="w-4 h-4" />
-                  <span className="hidden sm:inline">All Users</span>
-                </Link>
-
-                <Link
-                  to="/contacts"
-                  className="btn btn-sm gap-2 transition-colors"
-                >
-                  <Users className="w-4 h-4" />
-                  <span className="hidden sm:inline">Contacts</span>
-                </Link>
-
-                <Link to="/profile" className="btn btn-sm gap-2">
-                  <CircleUser className="size-5" />
-                  <span className="hidden sm:inline">Profile</span>
-                </Link>
-
-                <Link
-                  to="/settings"
-                  className="btn btn-sm gap-2 transition-colors"
-                >
-                  <Settings className="w-4 h-4" />
-                  <span className="hidden sm:inline">Settings</span>
-                </Link>
+                {/* Mobile Menu Dropdown */}
+                <div className="dropdown dropdown-end md:hidden">
+                  <div tabIndex={0} role="button" className="btn btn-sm btn-ghost">
+                    <Menu className="w-5 h-5" />
+                  </div>
+                  <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[50] w-52 p-2 shadow border border-base-300 mt-4 space-y-1">
+                    <li>
+                      <Link to="/users" className="gap-3">
+                        <Search className="w-4 h-4" />
+                        All Users
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/contacts" className="gap-3">
+                        <Users className="w-4 h-4" />
+                        Contacts
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/profile" className="gap-3">
+                        <CircleUser className="w-4 h-4" />
+                        Profile
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/settings" className="gap-3">
+                        <Settings className="w-4 h-4" />
+                        Settings
+                      </Link>
+                    </li>
+                    <li className="mt-2 border-t border-base-300 pt-2">
+                      <button onClick={logout} className="text-error gap-3">
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </li>
+                  </ul>
+                </div>
 
                 <RequestsNotification />
 
-                <button className="flex gap-2 items-center" onClick={logout}>
-                  <LogOut className="size-5" />
-                  <span className="hidden sm:inline">Logout</span>
-                </button>
+                {/* Desktop Menu */}
+                <div className="hidden md:flex items-center gap-2">
+                  <Link
+                    to="/users"
+                    className="btn btn-sm gap-2 transition-colors"
+                  >
+                    <Search className="w-4 h-4" />
+                    <span>All Users</span>
+                  </Link>
+
+                  <Link
+                    to="/contacts"
+                    className="btn btn-sm gap-2 transition-colors"
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>Contacts</span>
+                  </Link>
+
+                  <Link to="/profile" className="btn btn-sm gap-2">
+                    <CircleUser className="size-5" />
+                    <span>Profile</span>
+                  </Link>
+
+                  <Link
+                    to="/settings"
+                    className="btn btn-sm gap-2 transition-colors"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span>Settings</span>
+                  </Link>
+
+                  <button className="flex gap-2 items-center btn btn-sm btn-ghost" onClick={logout}>
+                    <LogOut className="size-5" />
+                    <span className="hidden lg:inline">Logout</span>
+                  </button>
+                </div>
               </>
             )}
           </div>
