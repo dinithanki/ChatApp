@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
+import { useNavigate } from "react-router-dom";
 import {
   Eye,
   EyeOff,
@@ -23,6 +24,7 @@ const SignUpPage = () => {
   });
 
   const { signup, isSigningUp } = useAuthStore();
+  const navigate = useNavigate();
 
   const validateForm = () => {
     if (!formData.fullName.trim()) return toast.error("Full name is required");
@@ -42,6 +44,17 @@ const SignUpPage = () => {
     const success = validateForm();
 
     if (success === true) signup(formData);
+  };
+
+  // handle signup and navigate to OTP page
+  const submitAndNavigate = async (e) => {
+    e.preventDefault();
+    const success = validateForm();
+    if (success !== true) return;
+    const res = await signup(formData);
+    if (res) {
+      navigate("/verify-email", { state: { email: formData.email } });
+    }
   };
 
   return (
@@ -65,7 +78,7 @@ const SignUpPage = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={submitAndNavigate} className="space-y-6">
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Full Name</span>
