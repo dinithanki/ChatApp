@@ -1,5 +1,7 @@
-import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
@@ -8,8 +10,6 @@ import { connectDB } from "./lib/db.js";
 import cors from "cors";
 import { Server } from "socket.io";
 import http from "http";
-
-dotenv.config();
 
 const app = express();
 const server = http.createServer(app);

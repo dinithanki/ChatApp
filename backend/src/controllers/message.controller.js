@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import cloudinary from "../lib/cloudinary.js";
+import { encryptMessage, decryptMessage } from "../lib/encryption.js";
 
 const areFriends = (user, otherUserId) => {
   if (!user?.friends) return false;
@@ -97,7 +98,15 @@ export const getConversations = async (req, res) => {
       areFriends(user, conversation.otherUser._id),
     );
 
-    res.status(200).json(filteredConversations);
+    // Decrypt the last message preview for the sidebar
+    const decryptedConversations = filteredConversations.map((conv) => {
+      if (conv.lastMessage && conv.lastMessage.text) {
+        conv.lastMessage.text = decryptMessage(conv.lastMessage.text);
+      }
+      return conv;
+    });
+
+    res.status(200).json(decryptedConversations);
   } catch (err) {
     console.error("Error in getConversations:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -123,7 +132,16 @@ export const getMessages = async (req, res) => {
       ],
     });
 
-    res.status(200).json(messages);
+    // Decrypt messages before sending to client
+    const decryptedMessages = messages.map((msg) => {
+      const msgObj = msg.toObject();
+      if (msgObj.text) {
+        msgObj.text = decryptMessage(msgObj.text);
+      }
+      return msgObj;
+    });
+
+    res.status(200).json(decryptedMessages);
   } catch (err) {
     console.error("Error in getMessages:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -157,19 +175,26 @@ export const sendMessage = async (req, res) => {
     const newMessage = new Message({
       senderId,
       receiverId,
-      text,
+      text: encryptMessage(text),
       image: imageUrl,
     });
     await newMessage.save();
 
+    // Create an unencrypted version of the message for realtime socket emission
+    // We do NOT want to send the encrypted hash to the frontend!
+    const unencryptedMessage = {
+      ...newMessage.toObject(),
+      text: text, // The original unencrypted text
+    };
+
     // Real-time functionality with socket.io
     const io = global.io;
     if (io) {
-      io.to(receiverId.toString()).emit("newMessage", newMessage);
-      io.to(senderId.toString()).emit("newMessage", newMessage);
+      io.to(receiverId.toString()).emit("newMessage", unencryptedMessage);
+      io.to(senderId.toString()).emit("newMessage", unencryptedMessage);
     }
 
-    res.status(201).json(newMessage);
+    res.status(201).json(unencryptedMessage);
   } catch (err) {
     console.error("Error in sendMessage:", err);
     res.status(500).json({ error: "Internal server error" });
