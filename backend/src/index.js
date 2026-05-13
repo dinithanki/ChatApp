@@ -10,6 +10,8 @@ import { connectDB } from "./lib/db.js";
 import cors from "cors";
 import { Server } from "socket.io";
 import http from "http";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 const app = express();
 const server = http.createServer(app);
@@ -27,6 +29,17 @@ const io = new Server(server, {
 // Make io accessible globally
 global.io = io;
 const userSocketMap = {}; // Map to track user IDs to socket IDs
+
+// Security Headers
+app.use(helmet());
+
+// Rate Limiting to prevent brute-force/DoS
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // Limit each IP to 200 requests per 15 mins
+  message: "Too many requests from this IP, please try again after 15 minutes",
+});
+app.use("/api", limiter);
 
 app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 
