@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    bio: {
+      type: String,
+      default: "Hey there 👋 I’m using Chat Mania to connect, chat, and make new friends.",
+    },
     friends: [
       {
         type: mongoose.Schema.Types.ObjectId,

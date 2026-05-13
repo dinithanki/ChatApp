@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
-import { Camera, Mail, User } from "lucide-react";
+import { Camera, Mail, User, Edit2, Check, X, MessageSquare } from "lucide-react";
 
 const ProfilePage = () => {
   const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
   const [selectedImg, setSelectedImg] = useState(null);
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [editBio, setEditBio] = useState("");
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -19,6 +24,22 @@ const ProfilePage = () => {
       setSelectedImg(base64Image);
       await updateProfile({ profilePic: base64Image });
     };
+  };
+
+  const handleSaveName = async () => {
+    if (editName.trim() && editName.trim() !== authUser.fullName) {
+      await updateProfile({ fullName: editName.trim() });
+    }
+    setIsEditingName(false);
+  };
+
+  const handleSaveBio = async () => {
+    const defaultBio = "Hey there 👋 I’m using Chat Mania to connect, chat, and make new friends.";
+    const currentBio = authUser.bio || defaultBio;
+    if (editBio.trim() !== currentBio) {
+      await updateProfile({ bio: editBio.trim() });
+    }
+    setIsEditingBio(false);
   };
 
   return (
@@ -69,13 +90,74 @@ const ProfilePage = () => {
 
           <div className="space-y-6">
             <div className="space-y-1.5">
-              <div className="text-sm text-zinc-400 flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Full Name
+              <div className="text-sm text-zinc-400 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Full Name
+                </div>
+                {!isEditingName ? (
+                  <button onClick={() => { setIsEditingName(true); setEditName(authUser?.fullName || ""); }} className="p-1 hover:text-primary transition-colors">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button onClick={handleSaveName} disabled={isUpdatingProfile} className="p-1 text-green-500 hover:bg-green-500/10 rounded transition-colors">
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setIsEditingName(false)} disabled={isUpdatingProfile} className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
-              <p className="px-4 py-2.5 bg-base-200 rounded-lg border">
-                {authUser?.fullName}
-              </p>
+              {isEditingName ? (
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-4 py-2 bg-base-200 rounded-lg border border-zinc-600 focus:outline-none focus:border-primary"
+                  autoFocus
+                />
+              ) : (
+                <p className="px-4 py-2.5 bg-base-200 rounded-lg border border-transparent">
+                  {authUser?.fullName}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="text-sm text-zinc-400 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Bio
+                </div>
+                {!isEditingBio ? (
+                  <button onClick={() => { setIsEditingBio(true); setEditBio(authUser?.bio || "Hey there 👋 I’m using Chat Mania to connect, chat, and make new friends."); }} className="p-1 hover:text-primary transition-colors">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button onClick={handleSaveBio} disabled={isUpdatingProfile} className="p-1 text-green-500 hover:bg-green-500/10 rounded transition-colors">
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setIsEditingBio(false)} disabled={isUpdatingProfile} className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              {isEditingBio ? (
+                <textarea
+                  value={editBio}
+                  onChange={(e) => setEditBio(e.target.value)}
+                  className="w-full px-4 py-2 bg-base-200 rounded-lg border border-zinc-600 focus:outline-none focus:border-primary resize-none h-24"
+                  autoFocus
+                />
+              ) : (
+                <p className="px-4 py-2.5 bg-base-200 rounded-lg border border-transparent min-h-[60px] whitespace-pre-wrap">
+                  {authUser?.bio || "Hey there 👋 I’m using Chat Mania to connect, chat, and make new friends."}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">
