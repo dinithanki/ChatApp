@@ -108,7 +108,9 @@ const AllUsersPage = () => {
                   <h2 className="card-title text-lg justify-center">
                     {user.fullName}
                   </h2>
-                  <p className="text-sm text-zinc-500">{user.email}</p>
+                  <p className="text-sm text-zinc-500 line-clamp-2 px-2">
+                    {user.bio}
+                  </p>
 
                   <button
                     className="btn btn-primary btn-sm mt-4 gap-2 w-full"
