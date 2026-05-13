@@ -43,9 +43,9 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="h-screen pt-20">
-      <div className="max-w-2xl mx-auto p-4 py-8">
-        <div className="bg-base-300 rounded-xl p-6 space-y-8">
+    <div className="min-h-screen pt-20 pb-4">
+      <div className="max-w-2xl mx-auto p-4 py-2">
+        <div className="bg-base-300 rounded-xl p-6 space-y-5">
           <div className="text-center">
             <h1 className="text-2xl font-semibold ">Profile</h1>
             <p className="mt-2">Your profile information</p>
@@ -88,41 +88,53 @@ const ProfilePage = () => {
             </p>
           </div>
 
-          <div className="space-y-6">
-            <div className="space-y-1.5">
-              <div className="text-sm text-zinc-400 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Full Name
-                </div>
-                {!isEditingName ? (
-                  <button onClick={() => { setIsEditingName(true); setEditName(authUser?.fullName || ""); }} className="p-1 hover:text-primary transition-colors">
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <div className="text-sm text-zinc-400 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <button onClick={handleSaveName} disabled={isUpdatingProfile} className="p-1 text-green-500 hover:bg-green-500/10 rounded transition-colors">
-                      <Check className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => setIsEditingName(false)} disabled={isUpdatingProfile} className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors">
-                      <X className="w-4 h-4" />
-                    </button>
+                    <User className="w-4 h-4" />
+                    Full Name
                   </div>
+                  {!isEditingName ? (
+                    <button onClick={() => { setIsEditingName(true); setEditName(authUser?.fullName || ""); }} className="p-1 hover:text-primary transition-colors">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button onClick={handleSaveName} disabled={isUpdatingProfile} className="p-1 text-green-500 hover:bg-green-500/10 rounded transition-colors">
+                        <Check className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => setIsEditingName(false)} disabled={isUpdatingProfile} className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {isEditingName ? (
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full px-4 py-2 bg-base-200 rounded-lg border border-zinc-600 focus:outline-none focus:border-primary"
+                    autoFocus
+                  />
+                ) : (
+                  <p className="px-4 py-2 bg-base-200 rounded-lg border border-transparent truncate">
+                    {authUser?.fullName}
+                  </p>
                 )}
               </div>
-              {isEditingName ? (
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-4 py-2 bg-base-200 rounded-lg border border-zinc-600 focus:outline-none focus:border-primary"
-                  autoFocus
-                />
-              ) : (
-                <p className="px-4 py-2.5 bg-base-200 rounded-lg border border-transparent">
-                  {authUser?.fullName}
+
+              <div className="space-y-1.5">
+                <div className="text-sm text-zinc-400 flex items-center gap-2 h-7">
+                  <Mail className="w-4 h-4" />
+                  Email Address
+                </div>
+                <p className="px-4 py-2 bg-base-200 rounded-lg border border-transparent truncate">
+                  {authUser?.email}
                 </p>
-              )}
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -150,35 +162,25 @@ const ProfilePage = () => {
                 <textarea
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
-                  className="w-full px-4 py-2 bg-base-200 rounded-lg border border-zinc-600 focus:outline-none focus:border-primary resize-none h-24"
+                  className="w-full px-4 py-2 bg-base-200 rounded-lg border border-zinc-600 focus:outline-none focus:border-primary resize-none h-16"
                   autoFocus
                 />
               ) : (
-                <p className="px-4 py-2.5 bg-base-200 rounded-lg border border-transparent min-h-[60px] whitespace-pre-wrap">
+                <p className="px-4 py-2 bg-base-200 rounded-lg border border-transparent min-h-[40px] whitespace-pre-wrap text-sm">
                   {authUser?.bio || "Hey there 👋 I’m using Chat Mania to connect, chat, and make new friends."}
                 </p>
               )}
             </div>
-
-            <div className="space-y-1.5">
-              <div className="text-sm text-zinc-400 flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                Email Address
-              </div>
-              <p className="px-4 py-2.5 bg-base-200 rounded-lg border">
-                {authUser?.email}
-              </p>
-            </div>
           </div>
 
-          <div className="mt-6 bg-base-300 rounded-xl p-6">
-            <h2 className="text-lg font-medium  mb-4">Account Information</h2>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between py-2 border-b border-zinc-700">
+          <div className="bg-base-200 rounded-xl p-4">
+            <h2 className="text-lg font-medium mb-3">Account Information</h2>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between py-1 border-b border-zinc-700">
                 <span>Member Since</span>
                 <span>{authUser.createdAt?.split("T")[0]}</span>
               </div>
-              <div className="flex items-center justify-between py-2">
+              <div className="flex items-center justify-between py-1">
                 <span>Account Status</span>
                 <span className="text-green-500">Active</span>
               </div>
