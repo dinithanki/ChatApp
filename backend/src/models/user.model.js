@@ -32,6 +32,26 @@ const userSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    passwordResetToken: {
+      type: String,
+      default: null,
+    },
+    passwordResetExpires: {
+      type: Date,
+      default: null,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationOTP: {
+      type: String,
+      default: null,
+    },
+    verificationOTPExpires: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );
