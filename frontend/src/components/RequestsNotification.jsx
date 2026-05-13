@@ -10,15 +10,18 @@ const RequestsNotification = () => {
   return (
     <div className="relative">
       <button
-        className="btn btn-ghost btn-sm relative"
+        className="flex items-center gap-3 md:gap-2 btn btn-ghost btn-sm relative w-full justify-start md:justify-center md:w-auto font-normal"
         onClick={() => setIsOpen((prev) => !prev)}
       >
-        <Bell className="size-5" />
-        {pendingRequests.length > 0 && (
-          <span className="badge badge-primary badge-sm absolute -top-1 -right-1">
-            {pendingRequests.length}
-          </span>
-        )}
+        <div className="relative flex items-center justify-center">
+          <Bell className="w-4 h-4 md:w-5 md:h-5" />
+          {pendingRequests.length > 0 && (
+            <span className="badge badge-primary badge-sm absolute -top-2 -right-2 md:-top-1 md:-right-1">
+              {pendingRequests.length}
+            </span>
+          )}
+        </div>
+        <span className="md:hidden lg:inline">Notifications</span>
       </button>
 
       {isOpen && (
