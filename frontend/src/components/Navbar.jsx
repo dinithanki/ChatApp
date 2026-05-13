@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import {
   LogOut,
@@ -15,10 +15,12 @@ import RequestsNotification from "./RequestsNotification";
 const Navbar = () => {
   const { logout, authUser } = useAuthStore();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const navigate = useNavigate();
 
-  const handleLogoutConfirm = () => {
+  const handleLogoutConfirm = async () => {
     setShowLogoutConfirm(false);
-    logout();
+    await logout();
+    navigate("/login");
   };
 
   return (
