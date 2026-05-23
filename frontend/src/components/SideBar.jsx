@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { useFriendsStore } from "../store/useFriendsStore";
-import SidebarSkeleton from "./skeletons/SidebarSkeleton";
+import SidebarSkeleton from "./Skeletons/SidebarSkeleton";
 import { Users, MessageSquareDot } from "lucide-react";
 
 const toId = (value) => String(value);
