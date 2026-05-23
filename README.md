@@ -1,4 +1,4 @@
-# Chat Mania
+# Chat Mania()
 
 Chat Mania is a full-stack real-time chat application built with a Vite + React frontend and an Express + MongoDB backend. It supports account creation, authentication, profile updates, contact management, friend requests, one-to-one messaging, online presence, and live updates with Socket.IO.
 
