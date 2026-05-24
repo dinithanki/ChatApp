@@ -1,0 +1,14 @@
+{
+  "name": "chat-mania",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Chat Mania monorepo entrypoint for Render",
+  "workspaces": [
+    "backend"
+  ],
+  "scripts": {
+    "start": "npm --prefix backend start",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev"
+  }
+}
