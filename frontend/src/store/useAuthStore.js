@@ -4,7 +4,8 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
 // Socket.io base URL - use "/" in development to leverage Vite's proxy
-const BASE_URL = import.meta.env.MODE === "development" ? "/" : import.meta.env.VITE_API_URL;
+const BASE_URL =
+  import.meta.env.MODE === "development" ? "/" : import.meta.env.VITE_API_URL;
 
 // Socket.io configuration from environment variables
 const SOCKET_CONFIG = {
@@ -64,7 +65,11 @@ export const useAuthStore = create((set, get) => ({
   verifyEmail: async (data) => {
     try {
       const res = await axiosInstance.post("/auth/verify-email", data);
-      set({ authUser: res.data });
+      if (res.data?.token) {
+        localStorage.setItem("authToken", res.data.token);
+      }
+      const { token, ...authUser } = res.data;
+      set({ authUser });
       toast.success("Email verified, logged in");
       get().connectSocket();
       return res.data;
@@ -88,7 +93,11 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoggingIn: true });
     try {
       const res = await axiosInstance.post("/auth/login", data);
-      set({ authUser: res.data });
+      if (res.data?.token) {
+        localStorage.setItem("authToken", res.data.token);
+      }
+      const { token, ...authUser } = res.data;
+      set({ authUser });
       toast.success("Logged in successfully");
 
       get().connectSocket();
@@ -102,6 +111,7 @@ export const useAuthStore = create((set, get) => ({
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
+      localStorage.removeItem("authToken");
       set({ authUser: null });
       toast.success("Logged out successfully");
       get().disconnectSocket();

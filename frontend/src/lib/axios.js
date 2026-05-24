@@ -4,7 +4,10 @@ const timeout = parseInt(import.meta.env.VITE_API_TIMEOUT || "30000");
 const debugMode = import.meta.env.VITE_DEBUG_MODE === "true";
 
 export const axiosInstance = axios.create({
-  baseURL: import.meta.env.MODE === "development" ? "/api" : import.meta.env.VITE_API_URL + "/api",
+  baseURL:
+    import.meta.env.MODE === "development"
+      ? "/api"
+      : import.meta.env.VITE_API_URL + "/api",
   withCredentials: true,
   timeout: timeout,
 });
@@ -12,6 +15,13 @@ export const axiosInstance = axios.create({
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
+    const authToken = localStorage.getItem("authToken");
+
+    if (authToken) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${authToken}`;
+    }
+
     if (debugMode) {
       console.log("[API Request]", config.method.toUpperCase(), config.url);
     }
