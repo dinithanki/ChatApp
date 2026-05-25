@@ -9,9 +9,23 @@ The forget password feature allows users to reset their password via email. The 
 ### Backend (.env file)
 
 ```
-# Email Configuration (Gmail)
+# Email Configuration
+# You can use either SMTP_URL or the host/user/password format.
+# SMTP_URL example:
+# SMTP_URL=smtp://user:pass@smtp.example.com:587
+
+# Preferred production setup: SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASSWORD
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your_smtp_username
+SMTP_PASSWORD=your_smtp_password
+EMAIL_FROM=ChatApp <no-reply@example.com>
+
+# Gmail fallback if you are using a Gmail app password
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASSWORD=your_gmail_app_password
+EMAIL_SERVICE=gmail
 
 # Frontend URL (for password reset link)
 FRONTEND_URL=http://localhost:5173
@@ -30,9 +44,10 @@ FRONTEND_URL=http://localhost:5173
    - Google will generate a 16-character password
    - Copy this password and use it as `EMAIL_PASSWORD` in your .env file
 
-3. **Email User**
-   - Use your full Gmail address as `EMAIL_USER`
-   - Example: `your_email@gmail.com`
+3. **Email Provider Credentials**
+
+- For SMTP providers, set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASSWORD`
+- For Gmail, set `EMAIL_USER` and `EMAIL_PASSWORD` using a Gmail app password
 
 ### Alternative: Using Other Email Services
 
