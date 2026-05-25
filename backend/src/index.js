@@ -57,7 +57,8 @@ function isAllowedOrigin(origin) {
   }
 
   return (
-    typeof origin === "string" && /(^https:\/\/.+\.vercel\.app$)/.test(origin)
+    typeof origin === "string" &&
+    /(^https:\/\/.+\.(vercel\.app|vercel\.com)$)/.test(origin)
   );
 }
 
@@ -78,6 +79,12 @@ const corsOptions = {
 // ========================
 app.use(helmet());
 
+// ========================
+// CORS (PRODUCTION SAFE)
+// ========================
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
+
 // IMPORTANT for AWS / reverse proxy (EC2)
 app.set("trust proxy", 1);
 
@@ -90,13 +97,6 @@ const limiter = rateLimit({
   message: "Too many requests, try again later",
 });
 app.use("/api", limiter);
-
-// ========================
-// CORS (PRODUCTION SAFE)
-// ========================
-app.use(cors(corsOptions));
-
-app.options(/.*/, cors(corsOptions));
 
 // ========================
 // BODY PARSING

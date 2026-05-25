@@ -52,9 +52,7 @@ const SignUpPage = () => {
     const success = validateForm();
     if (success !== true) return;
     const res = await signup(formData);
-    if (res?.token) {
-      navigate("/");
-    } else if (res) {
+    if (res) {
       navigate("/verify-email", { state: { email: formData.email } });
     }
   };

@@ -60,25 +60,6 @@ export const signup = async (req, res) => {
         });
       } catch (emailErr) {
         console.error("Error sending verification email:", emailErr);
-
-        newUser.isVerified = true;
-        newUser.verificationOTP = null;
-        newUser.verificationOTPExpires = null;
-        await newUser.save();
-
-        const token = generateToken(newUser._id, res);
-
-        res.status(201).json({
-          message:
-            "Account created. Email delivery failed, so your account was activated automatically.",
-          token,
-          _id: newUser._id,
-          fullName: newUser.fullName,
-          email: newUser.email,
-          profilePic: newUser.profilePic,
-          bio: newUser.bio,
-          verificationSkipped: true,
-        });
       }
     } else {
       res.status(400).json({ message: "Error creating user" });
@@ -188,11 +169,7 @@ export const forgotPassword = async (req, res) => {
       res.status(200).json({ message: "Reset link sent to your email" });
     } catch (emailErr) {
       console.error("Error sending reset email:", emailErr);
-      res.status(200).json({
-        message: "Email delivery failed. Open the reset page directly.",
-        resetToken,
-        resetUrl,
-      });
+      res.status(500).json({ message: "Error sending reset email" });
     }
   } catch (error) {
     console.error("Error in forgotPassword controller:", error);
