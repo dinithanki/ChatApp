@@ -16,7 +16,8 @@ However, **Render blocks all outgoing SMTP ports (25, 465, 587) on their Free Ti
 
 To bypass this restriction, the backend has been updated to support **HTTP-Based Email APIs** (via port **443**, which is standard HTTPS and **never blocked**).
 
-You can use **Resend** (recommended) or **SendGrid**. They offer generous free plans:
+You can use **Brevo**, **Resend**, or **SendGrid**. They offer free plans:
+*   **Brevo:** 300 emails/day.
 *   **Resend:** 3,000 free emails/month (no credit card required to start).
 *   **SendGrid:** 100 free emails/day.
 
@@ -60,23 +61,29 @@ When deploying your Node.js + Express backend on Render, you must configure thes
 
 ### Email Service Variables (Choose ONE):
 
-#### Option A: Using Resend HTTP API (Recommended)
+#### Option A: Using Brevo HTTP API
+| Variable Name | Value | Description |
+| :--- | :--- | :--- |
+| `BREVO_API_KEY` | `xkeysib-...` | Your Brevo API key. Automatically activates the HTTP-based email sender. |
+| `EMAIL_FROM` | `ChatApp <your_verified_sender_email>` | A sender email verified in Brevo. |
+
+#### Option B: Using Resend HTTP API
 | Variable Name | Value | Description |
 | :--- | :--- | :--- |
 | `RESEND_API_KEY` | `re_123456789...` | Your Resend API key. Automatically activates the HTTP-based email sender. |
 | `EMAIL_FROM` | `ChatApp <no-reply@yourdomain.com>` | Optional. Defaults to `onboarding@resend.dev` (requires domain validation on Resend to change). |
 
-#### Option B: Using SendGrid HTTP API
+#### Option C: Using SendGrid HTTP API
 | Variable Name | Value | Description |
 | :--- | :--- | :--- |
 | `SENDGRID_API_KEY` | `SG.123456789...` | Your SendGrid API key. Automatically activates the SendGrid HTTP-based email sender. |
 | `EMAIL_FROM` | `no-reply@yourdomain.com` | The verified sender email in your SendGrid dashboard. |
 
-#### Option C: Fallback to Local SMTP (Only if you upgraded Render to a Paid tier)
+#### Option D: Fallback to Local SMTP (Only if you upgraded Render to a Paid tier)
 | Variable Name | Value | Description |
 | :--- | :--- | :--- |
-| `EMAIL_USER` | `dinithpamunuwatte@gmail.com` | Your Gmail address. |
-| `EMAIL_PASSWORD` | `vknx mjum bews dkxw` | Your 16-character Gmail App Password. |
+| `EMAIL_USER` | `your_email@gmail.com` | Your Gmail address. |
+| `EMAIL_PASSWORD` | `your_16_character_google_app_password` | Your 16-character Gmail App Password. |
 
 ---
 

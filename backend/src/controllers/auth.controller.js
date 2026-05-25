@@ -5,6 +5,20 @@ import cloudinary from "../lib/cloudinary.js";
 import crypto from "crypto";
 import { sendEmail } from "../lib/email.js";
 
+function getFrontendUrl(req) {
+  const configuredUrl = process.env.FRONTEND_URL;
+  if (configuredUrl) {
+    return configuredUrl.trim().replace(/\/+$/, "");
+  }
+
+  const origin = req.get("origin");
+  if (origin) {
+    return origin.trim().replace(/\/+$/, "");
+  }
+
+  return "http://localhost:5173";
+}
+
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
   try {
@@ -148,7 +162,7 @@ export const forgotPassword = async (req, res) => {
     await user.save();
 
     // Send email
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const resetUrl = `${getFrontendUrl(req)}/reset-password/${resetToken}`;
 
     const mailOptions = {
       to: user.email,

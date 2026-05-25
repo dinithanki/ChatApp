@@ -16,6 +16,13 @@ function normalizeEmail(value) {
   return value.trim();
 }
 
+function parseEmailAddress(value) {
+  const normalized = normalizeEmail(value);
+  const match = normalized.match(/<([^>]+)>/);
+
+  return match ? match[1].trim() : normalized;
+}
+
 function createTransporter() {
   const url = process.env.SMTP_URL || process.env.EMAIL_URL;
   const host = process.env.SMTP_HOST || process.env.EMAIL_HOST;
@@ -35,7 +42,11 @@ function createTransporter() {
   );
 
   if (url) {
-    return nodemailer.createTransport(url);
+    return nodemailer.createTransport(url, {
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
+    });
   }
 
   if (host) {
@@ -43,6 +54,9 @@ function createTransporter() {
       host,
       port,
       secure,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
       auth: emailUser
         ? {
             user: emailUser,
@@ -55,6 +69,9 @@ function createTransporter() {
   if (service) {
     return nodemailer.createTransport({
       service,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
       auth: {
         user: emailUser,
         pass: emailPassword,
@@ -70,6 +87,9 @@ function createTransporter() {
 
   return nodemailer.createTransport({
     service: "gmail",
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
     auth: {
       user: emailUser,
       pass: emailPassword,
@@ -78,24 +98,59 @@ function createTransporter() {
 }
 
 export async function sendEmail(mailOptions) {
+  const brevoApiKey = process.env.BREVO_API_KEY;
   const resendApiKey = process.env.RESEND_API_KEY;
   const sendgridApiKey = process.env.SENDGRID_API_KEY;
 
-  // 1. Resend HTTP API (Recommended for Render / Vercel bypass)
+  // 1. Brevo HTTP API (works on hosted providers that block SMTP)
+  if (brevoApiKey) {
+    console.log("📨 Sending email via Brevo HTTP API...");
+    const from = normalizeEmail(
+      process.env.EMAIL_FROM || process.env.SMTP_FROM || process.env.EMAIL_USER,
+    );
+    const fromEmail = parseEmailAddress(from);
+    const fromNameMatch = from.match(/^(.+?)\s*</);
+    const fromName = fromNameMatch ? fromNameMatch[1].trim() : "ChatApp";
+
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": brevoApiKey,
+      },
+      body: JSON.stringify({
+        sender: { name: fromName, email: fromEmail },
+        to: [{ email: mailOptions.to }],
+        subject: mailOptions.subject,
+        htmlContent: mailOptions.html,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Brevo HTTP API failed: ${response.status} ${errText}`);
+    }
+
+    const data = await response.json();
+    console.log("✅ Email sent successfully via Brevo HTTP API.");
+    return data;
+  }
+
+  // 2. Resend HTTP API (Recommended for Render / Vercel bypass)
   if (resendApiKey) {
     console.log("📨 Sending email via Resend HTTP API...");
     const from = normalizeEmail(
-      process.env.EMAIL_FROM || process.env.SMTP_FROM || "onboarding@resend.dev"
+      process.env.EMAIL_FROM || process.env.SMTP_FROM || "onboarding@resend.dev",
     );
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${resendApiKey}`,
+        Authorization: `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: from,
+        from,
         to: mailOptions.to,
         subject: mailOptions.subject,
         html: mailOptions.html,
@@ -112,22 +167,23 @@ export async function sendEmail(mailOptions) {
     return data;
   }
 
-  // 2. SendGrid HTTP API
+  // 3. SendGrid HTTP API
   if (sendgridApiKey) {
     console.log("📨 Sending email via SendGrid HTTP API...");
     const from = normalizeEmail(
-      process.env.EMAIL_FROM || process.env.SMTP_FROM || "no-reply@example.com"
+      process.env.EMAIL_FROM || process.env.SMTP_FROM || "no-reply@example.com",
     );
+    const fromEmail = parseEmailAddress(from);
 
     const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${sendgridApiKey}`,
+        Authorization: `Bearer ${sendgridApiKey}`,
       },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: mailOptions.to }] }],
-        from: { email: from },
+        from: { email: fromEmail },
         subject: mailOptions.subject,
         content: [{ type: "text/html", value: mailOptions.html }],
       }),
@@ -142,7 +198,7 @@ export async function sendEmail(mailOptions) {
     return { success: true };
   }
 
-  // 3. Fallback to standard Nodemailer SMTP
+  // 4. Fallback to standard Nodemailer SMTP
   console.log("📨 Attempting to send email via SMTP (Nodemailer)...");
   const transporter = createTransporter();
   const from = normalizeEmail(
