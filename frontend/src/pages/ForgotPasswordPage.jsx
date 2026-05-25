@@ -20,8 +20,16 @@ const ForgotPasswordPage = () => {
 
     setIsLoading(true);
     try {
-      await axiosInstance.post("/auth/forgot-password", { email });
+      const response = await axiosInstance.post("/auth/forgot-password", {
+        email,
+      });
       setSubmitted(true);
+      if (response.data?.resetToken) {
+        toast.success("Email delivery failed. Opening the reset page now.");
+        navigate(`/reset-password/${response.data.resetToken}`);
+        return;
+      }
+
       toast.success("Reset link sent to your email");
 
       // Redirect after 3 seconds

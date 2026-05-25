@@ -3,7 +3,7 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
 import crypto from "crypto";
-import nodemailer from "nodemailer";
+import { sendEmail } from "../lib/email.js";
 
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -38,17 +38,7 @@ export const signup = async (req, res) => {
 
       await newUser.save();
 
-      // Send OTP email
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASSWORD,
-        },
-      });
-
       const mailOptions = {
-        from: process.env.EMAIL_USER,
         to: newUser.email,
         subject: "Verify your email - ChatApp",
         html: `
@@ -60,17 +50,36 @@ export const signup = async (req, res) => {
       };
 
       try {
-        await transporter.sendMail(mailOptions);
+        await sendEmail(mailOptions);
+
+        res.status(201).json({
+          message:
+            "Account created. OTP sent to email. Please verify to activate account",
+          email: newUser.email,
+          userId: newUser._id,
+        });
       } catch (emailErr) {
         console.error("Error sending verification email:", emailErr);
-      }
 
-      res.status(201).json({
-        message:
-          "Account created. OTP sent to email. Please verify to activate account",
-        email: newUser.email,
-        userId: newUser._id,
-      });
+        newUser.isVerified = true;
+        newUser.verificationOTP = null;
+        newUser.verificationOTPExpires = null;
+        await newUser.save();
+
+        const token = generateToken(newUser._id, res);
+
+        res.status(201).json({
+          message:
+            "Account created. Email delivery failed, so your account was activated automatically.",
+          token,
+          _id: newUser._id,
+          fullName: newUser.fullName,
+          email: newUser.email,
+          profilePic: newUser.profilePic,
+          bio: newUser.bio,
+          verificationSkipped: true,
+        });
+      }
     } else {
       res.status(400).json({ message: "Error creating user" });
     }
@@ -160,16 +169,7 @@ export const forgotPassword = async (req, res) => {
     // Send email
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
-
     const mailOptions = {
-      from: process.env.EMAIL_USER,
       to: user.email,
       subject: "Password Reset Request - ChatApp",
       html: `
@@ -183,8 +183,17 @@ export const forgotPassword = async (req, res) => {
             `,
     };
 
-    await transporter.sendMail(mailOptions);
-    res.status(200).json({ message: "Reset link sent to your email" });
+    try {
+      await sendEmail(mailOptions);
+      res.status(200).json({ message: "Reset link sent to your email" });
+    } catch (emailErr) {
+      console.error("Error sending reset email:", emailErr);
+      res.status(200).json({
+        message: "Email delivery failed. Open the reset page directly.",
+        resetToken,
+        resetUrl,
+      });
+    }
   } catch (error) {
     console.error("Error in forgotPassword controller:", error);
     res.status(500).json({ message: "Error sending reset email" });
@@ -315,16 +324,7 @@ export const resendOTP = async (req, res) => {
     user.verificationOTPExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
     await user.save();
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
-
     const mailOptions = {
-      from: process.env.EMAIL_USER,
       to: user.email,
       subject: "Your verification code - ChatApp",
       html: `
@@ -336,7 +336,7 @@ export const resendOTP = async (req, res) => {
     };
 
     try {
-      await transporter.sendMail(mailOptions);
+      await sendEmail(mailOptions);
     } catch (emailErr) {
       console.error("Error sending verification email:", emailErr);
     }

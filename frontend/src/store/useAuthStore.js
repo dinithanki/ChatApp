@@ -55,6 +55,12 @@ export const useAuthStore = create((set, get) => ({
     set({ isSigningUp: true });
     try {
       const res = await axiosInstance.post("/auth/signup", data);
+      if (res.data?.token) {
+        localStorage.setItem("authToken", res.data.token);
+        const { token, ...authUser } = res.data;
+        set({ authUser });
+        get().connectSocket();
+      }
       // Return response to caller so UI can navigate to OTP page
       toast.success(res.data?.message || "Account created. Verify your email.");
       return res.data;
