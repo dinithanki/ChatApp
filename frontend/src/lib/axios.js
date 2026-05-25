@@ -1,13 +1,15 @@
 import axios from "axios";
+import { getApiBaseUrl } from "./url.js";
 
 const timeout = parseInt(import.meta.env.VITE_API_TIMEOUT || "30000");
 const debugMode = import.meta.env.VITE_DEBUG_MODE === "true";
+const apiBaseUrl = getApiBaseUrl(
+  import.meta.env.VITE_API_URL,
+  import.meta.env.MODE,
+);
 
 export const axiosInstance = axios.create({
-  baseURL:
-    import.meta.env.MODE === "development"
-      ? "/api"
-      : import.meta.env.VITE_API_URL + "/api",
+  baseURL: apiBaseUrl,
   withCredentials: true,
   timeout: timeout,
 });

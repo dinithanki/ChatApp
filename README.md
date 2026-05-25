@@ -107,6 +107,8 @@ VITE_SOCKET_RECONNECT_ATTEMPTS=5
 VITE_TOAST_DURATION=3000
 ```
 
+For deployment, set `VITE_API_URL` to the backend origin only, for example `https://your-backend.onrender.com`. Do not append `/api`; the app adds that path automatically. If the frontend is hosted on Vercel, make sure Render's `FRONTEND_URL` matches the exact live frontend origin, or add it to `CORS_ORIGINS`.
+
 Note: the frontend proxies API and Socket.IO traffic to the backend URL configured in `VITE_API_URL` and `VITE_SOCKET_URL`. Keep those values aligned with the backend port you actually run.
 
 ## Running Chat Mania

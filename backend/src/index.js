@@ -16,15 +16,31 @@ import rateLimit from "express-rate-limit";
 const app = express();
 const server = http.createServer(app);
 
+function normalizeOrigin(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const trimmed = value.trim().replace(/\/+$/, "");
+
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    return trimmed;
+  }
+}
+
 // ========================
 // ENV CONFIG (PRODUCTION SAFE)
 // ========================
 const PORT = process.env.PORT || 5000;
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const FRONTEND_URL = normalizeOrigin(
+  process.env.FRONTEND_URL || "http://localhost:5173",
+);
 const EXTRA_CORS_ORIGINS = (process.env.CORS_ORIGINS || "")
   .split(",")
-  .map((origin) => origin.trim())
+  .map((origin) => normalizeOrigin(origin))
   .filter(Boolean);
 
 // IMPORTANT: allow localhost, configured origins, and Vercel preview deployments.
